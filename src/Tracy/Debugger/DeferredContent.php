@@ -7,8 +7,7 @@
 
 namespace Tracy;
 
-use function array_slice, is_string, json_encode, strlen;
-use const JSON_INVALID_UTF8_SUBSTITUTE, JSON_UNESCAPED_SLASHES, JSON_UNESCAPED_UNICODE;
+use function array_slice, is_string, strlen;
 
 
 /**
@@ -113,15 +112,18 @@ final class DeferredContent
 			return true;
 		}
 
-		if (is_string($asset) && preg_match('#^lazy-panel\.([\w.+-]+)$#', $asset, $m)) {
-			$key = $m[1];
+		if (is_string($asset) && preg_match('#^lazy-panel\.(\w{10,15})\.([a-z0-9-]+)$#Di', $asset, $m)) {
+			[, $requestId, $panelId] = $m;
 			header('Content-Type: application/json; charset=UTF-8');
 			header('Cache-Control: no-cache');
 			header_remove('Set-Cookie');
 			$lazyItems = &$this->getItems('lazy-panels');
-			$content = $lazyItems[$key]['content'] ?? null;
-			unset($lazyItems[$key]);
-			$str = json_encode(['content' => $content], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+			$content = $lazyItems[$requestId]['panels'][$panelId] ?? null;
+			unset($lazyItems[$requestId]['panels'][$panelId]);
+			if (empty($lazyItems[$requestId]['panels'])) {
+				unset($lazyItems[$requestId]);
+			}
+			$str = Helpers::jsonEncode(['content' => $content]);
 			header('Content-Length: ' . strlen($str));
 			echo $str;
 			flush();

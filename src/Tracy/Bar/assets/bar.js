@@ -105,13 +105,13 @@ class Panel {
 
 	fetchLazyContent() {
 		let elem = this.elem;
-		let panelId = elem.id.replace('tracy-debug-panel-', '');
-		let url = baseUrl + '_tracy_bar=lazy-panel.' + requestId + '.' + panelId + '&XDEBUG_SESSION_STOP=1&v=' + Math.random();
+		let lazyToken = elem.dataset.tracyLazy;
+		let url = baseUrl + '_tracy_bar=lazy-panel.' + encodeURIComponent(lazyToken) + '&XDEBUG_SESSION_STOP=1&v=' + Math.random();
 
 		fetch(url)
 			.then((response) => response.json())
 			.then((data) => {
-				if (data.content) {
+				if (data.content !== null) {
 					elem.innerHTML = elem.tracyContent = data.content;
 					delete elem.dataset.tracyLazy;
 					Tracy.Dumper.init(Debug.shadow);
